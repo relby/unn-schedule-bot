@@ -17,7 +17,7 @@ type MyConversation = Conversation<MyContext>;
 const { BOT_TOKEN } = process.env;
 
 if (!BOT_TOKEN) {
-    console.error("Provide BOT_TOKEN to env variables")
+    console.error('Provide BOT_TOKEN to env variables')
     process.exit(1)
 }
 
@@ -43,20 +43,18 @@ const setgroup = async (conversation: MyConversation, ctx: MyContext) => {
             type: 'group'
         }
     }))).data as SearchGroup[];
-    console.log(groups.length)
     if (groups.length === 0) {
-        return await ctx.reply(`Group \`${groupName}\` haven't been found`);
+        return await ctx.reply(`Group \`${groupName}\` haven't been found`, { parse_mode: "MarkdownV2" });
     }
    
     if (groups[0].label.toLowerCase() === groupName.toLowerCase()) {
-        return await ctx.reply(`Group \`${groupName}\` have been added to your account`);
+        return await ctx.reply(`Group \`${groupName}\` have been added to your account`, { parse_mode: "MarkdownV2" });
     }
-    // TODO: Make it with Menu plugin, breaks if there are 1-2 items
     let inlineKeyboard = new InlineKeyboard()
     for (let i = 0; i < Math.min(groups.length, 3); i++) {
         inlineKeyboard = inlineKeyboard.text(groups[i].label, `setgroup-${groups[i].label}-${groups[i].id}`);
     }
-    return await ctx.reply(`${groupName} haven't been found. Maybe you meant this?`, { reply_markup: inlineKeyboard })
+    return await ctx.reply(`\`${groupName}\` haven't been found\\. Did you mean this?`, { reply_markup: inlineKeyboard, parse_mode: "MarkdownV2" })
 }
 
 bot.use(createConversation(setgroup))
@@ -77,7 +75,7 @@ bot.callbackQuery(/^setgroup-(.+)$/, async (ctx) => {
     ctx.session.groupId = id;
     const text = `Group \`${name}\` have been added to your account`;
     await ctx.answerCallbackQuery({ text });
-    await ctx.editMessageText(text);
+    await ctx.editMessageText(text, { parse_mode: "MarkdownV2" });
 })
 
 bot.command('mygroup', async ctx => {
@@ -85,7 +83,7 @@ bot.command('mygroup', async ctx => {
     if (!groupName || !groupId) {
         return await ctx.reply(NO_GROUP_MESSAGE);
     }
-    return await ctx.reply(`Your group is \`${groupName}\`. You can change it with /setgroup command`);
+    return await ctx.reply(`Your group is \`${groupName}\`\\. You can change it with /setgroup command`, { parse_mode: "MarkdownV2" });
 })
 
 bot.command('today', async ctx => {
