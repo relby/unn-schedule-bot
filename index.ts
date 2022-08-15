@@ -52,10 +52,10 @@ const addgroup = async (conversation: MyConversation, ctx: MyContext) => {
         return await ctx.reply(`Group \`${groupName}\` have been added to your account`);
     }
     // TODO: Make it with Menu plugin, breaks if there are 1-2 items
-    const inlineKeyboard = new InlineKeyboard()
-        .text(groups[0].label, `addgroup-${groups[0].label}-${groups[0].id}`)
-        .text(groups[1].label, `addgroup-${groups[1].label}-${groups[1].id}`)
-        .text(groups[2].label, `addgroup-${groups[2].label}-${groups[2].id}`)
+    let inlineKeyboard = new InlineKeyboard()
+    for (let i = 0; i < Math.min(groups.length, 3); i++) {
+        inlineKeyboard = inlineKeyboard.text(groups[i].label, `addgroup-${groups[i].label}-${groups[i].id}`);
+    }
     return await ctx.reply(`${groupName} haven't been found. Maybe you meant this?`, { reply_markup: inlineKeyboard })
 }
 
