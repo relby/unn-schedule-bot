@@ -1,18 +1,18 @@
 import dotenv from 'dotenv';
 import axios from 'axios';
 dotenv.config()
-import { Bot, Context, InlineKeyboard, lazySession, LazySessionFlavor } from 'grammy';
+import { Bot, Context, InlineKeyboard, lazySession, LazySessionFlavor, session, SessionFlavor } from 'grammy';
 import { freeStorage } from '@grammyjs/storage-free'
+import { type Conversation, type ConversationFlavor, conversations, createConversation } from '@grammyjs/conversations'
 import { Lesson, SearchGroup } from './types'
 
 interface SessionData {
-    group: {
-        name: string
-        id: string
-    } | null
+    groupName: string | null;
+    groupId: string | null;
 }
 
-type MyContext = Context & LazySessionFlavor<SessionData>;
+type MyContext = Context & SessionFlavor<SessionData> & ConversationFlavor;
+type MyConversation = Conversation<MyContext>;
 
 const { BOT_TOKEN } = process.env;
 
@@ -23,77 +23,80 @@ if (!BOT_TOKEN) {
 
 const bot = new Bot<MyContext>(BOT_TOKEN);
 
-bot.use(lazySession({
-    initial: () => ({group: null}),
+bot.use(session({
+    initial: () => ({ groupName: null, groupId: null }),
     storage: freeStorage<SessionData>(bot.token)
 }))
 
-const API_SCHEDULE_URL = "https://portal.unn.ru/ruzapi/schedule/group/";
-const API_SEARCH_URL = "https://portal.unn.ru/ruzapi/search";
-const NO_GROUP_MESSAGE = `You don't have your group configured. Use /addgroup command to add the group to your account`;
+bot.use(conversations())
 
+const addgroup = async (conversation: MyConversation, ctx: MyContext) => {
+    await ctx.reply("Enter your group name");
+    const { message } = await conversation.wait();
+    if (!message || !message.text) return await ctx.reply(`You didn't provide the group name`);
 
-// TODO: Rewrite start message
-const dateToParamsString = (date: Date): string => `${date.getFullYear()}.${(date.getMonth()).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`
+    const groupName = message.text;
 
-bot.command('addgroup', async ctx => {
-    const args = ctx.message!.text.split(' ').slice(1);
-    if (args.length === 0) {
-        return await ctx.reply('You have to provide group name');
-    }
-    const [groupName] = args;
-
-    const groups = (await axios.get(API_SEARCH_URL, {
+    const groups = (await conversation.external(() => axios.get(API_SEARCH_URL, {
         params: {
             term: groupName,
             type: 'group'
         }
-    })).data as SearchGroup[];
-
+    }))).data as SearchGroup[];
+    console.log(groups.length)
     if (groups.length === 0) {
         return await ctx.reply(`Group \`${groupName}\` haven't been found`);
     }
    
     if (groups[0].label.toLowerCase() === groupName.toLowerCase()) {
-        (await ctx.session).group = {
-            name: groups[0].label,
-            id: groups[0].id
-        }
         return await ctx.reply(`Group \`${groupName}\` have been added to your account`);
     }
-    // TODO: Make it with Menu plugin
+    // TODO: Make it with Menu plugin, breaks if there are 1-2 items
     const inlineKeyboard = new InlineKeyboard()
         .text(groups[0].label, `addgroup-${groups[0].label}-${groups[0].id}`)
         .text(groups[1].label, `addgroup-${groups[1].label}-${groups[1].id}`)
         .text(groups[2].label, `addgroup-${groups[2].label}-${groups[2].id}`)
     return await ctx.reply(`${groupName} haven't been found. Maybe you meant this?`, { reply_markup: inlineKeyboard })
+}
+
+bot.use(createConversation(addgroup))
+
+const API_SCHEDULE_URL = "https://portal.unn.ru/ruzapi/schedule/group/";
+const API_SEARCH_URL = "https://portal.unn.ru/ruzapi/search";
+const NO_GROUP_MESSAGE = `You don't have your group configured. Use /addgroup command to add the group to your account`;
+
+const dateToParamsString = (date: Date): string => `${date.getFullYear()}.${(date.getMonth()).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`
+
+bot.command('addgroup', async ctx => {
+    await ctx.conversation.enter('addgroup');
 })
 
 bot.callbackQuery(/^addgroup-(.+)$/, async (ctx) => {
     const [name, id] = ctx.callbackQuery.data.split('-').slice(1);
-    (await ctx.session).group = { name, id };
+    ctx.session.groupName = name;
+    ctx.session.groupId = id;
     const text = `Group \`${name}\` have been added to your account`;
     await ctx.answerCallbackQuery({ text });
     await ctx.editMessageText(text);
 })
 
 bot.command('mygroup', async ctx => {
-    const myGroup = (await ctx.session).group;
-    if (!myGroup) {
+    const { groupName, groupId } = ctx.session;
+    if (!groupName || !groupId) {
         return await ctx.reply(NO_GROUP_MESSAGE);
     }
-    return await ctx.reply(`Your group is \`${myGroup.name}\`. You can change it with /addgroup command`);
+    return await ctx.reply(`Your group is \`${groupName}\`. You can change it with /addgroup command`);
 })
 
 bot.command('today', async ctx => {
-    const myGroup = (await ctx.session).group;
+    const { groupName, groupId } = ctx.session;
     // TODO: Move to function
-    if (!myGroup) {
+    if (!groupName || !groupId) {
         return await ctx.reply(NO_GROUP_MESSAGE);
     }
     const today = new Date(2022, 2, 1);
     const start = dateToParamsString(today);
-    const lessons = (await axios.get(`${API_SCHEDULE_URL}/${myGroup.id}`, {
+    const lessons = (await axios.get(`${API_SCHEDULE_URL}/${groupId}`, {
         params: {
             start,
             finish: start
@@ -108,10 +111,17 @@ bot.command('today', async ctx => {
     return await ctx.reply(reply)
 });
 
+bot.command('deletegroup', async ctx => {
+    ctx.session.groupName = null;
+    ctx.session.groupId = null;
+    ctx.reply('Your group have been deleted')
+})
+
 bot.api.setMyCommands([
-    { command: 'addgroup', description: 'TODO' },
-    { command: 'mygroup', description: 'TODO' },
-    { command: 'today', description: 'TODO' }
+    { command: 'addgroup',    description: 'TODO' },
+    { command: 'mygroup',     description: 'TODO' },
+    { command: 'today',       description: 'TODO' },
+    { command: 'deletegroup', description: 'TODO' },
 ])
 
 bot.catch(console.error)
