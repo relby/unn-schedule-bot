@@ -30,7 +30,7 @@ bot.use(session({
 
 bot.use(conversations())
 
-const addgroup = async (conversation: MyConversation, ctx: MyContext) => {
+const setgroup = async (conversation: MyConversation, ctx: MyContext) => {
     await ctx.reply("Enter your group name");
     const { message } = await conversation.wait();
     if (!message || !message.text) return await ctx.reply(`You didn't provide the group name`);
@@ -54,24 +54,24 @@ const addgroup = async (conversation: MyConversation, ctx: MyContext) => {
     // TODO: Make it with Menu plugin, breaks if there are 1-2 items
     let inlineKeyboard = new InlineKeyboard()
     for (let i = 0; i < Math.min(groups.length, 3); i++) {
-        inlineKeyboard = inlineKeyboard.text(groups[i].label, `addgroup-${groups[i].label}-${groups[i].id}`);
+        inlineKeyboard = inlineKeyboard.text(groups[i].label, `setgroup-${groups[i].label}-${groups[i].id}`);
     }
     return await ctx.reply(`${groupName} haven't been found. Maybe you meant this?`, { reply_markup: inlineKeyboard })
 }
 
-bot.use(createConversation(addgroup))
+bot.use(createConversation(setgroup))
 
 const API_SCHEDULE_URL = "https://portal.unn.ru/ruzapi/schedule/group/";
 const API_SEARCH_URL = "https://portal.unn.ru/ruzapi/search";
-const NO_GROUP_MESSAGE = `You don't have your group configured. Use /addgroup command to add the group to your account`;
+const NO_GROUP_MESSAGE = `You don't have your group configured. Use /setgroup command to add the group to your account`;
 
 const dateToParamsString = (date: Date): string => `${date.getFullYear()}.${(date.getMonth()).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`
 
-bot.command('addgroup', async ctx => {
-    await ctx.conversation.enter('addgroup');
+bot.command('setgroup', async ctx => {
+    await ctx.conversation.enter('setgroup');
 })
 
-bot.callbackQuery(/^addgroup-(.+)$/, async (ctx) => {
+bot.callbackQuery(/^setgroup-(.+)$/, async (ctx) => {
     const [name, id] = ctx.callbackQuery.data.split('-').slice(1);
     ctx.session.groupName = name;
     ctx.session.groupId = id;
@@ -85,7 +85,7 @@ bot.command('mygroup', async ctx => {
     if (!groupName || !groupId) {
         return await ctx.reply(NO_GROUP_MESSAGE);
     }
-    return await ctx.reply(`Your group is \`${groupName}\`. You can change it with /addgroup command`);
+    return await ctx.reply(`Your group is \`${groupName}\`. You can change it with /setgroup command`);
 })
 
 bot.command('today', async ctx => {
@@ -118,7 +118,7 @@ bot.command('deletegroup', async ctx => {
 })
 
 bot.api.setMyCommands([
-    { command: 'addgroup',    description: 'TODO' },
+    { command: 'setgroup',    description: 'TODO' },
     { command: 'mygroup',     description: 'TODO' },
     { command: 'today',       description: 'TODO' },
     { command: 'deletegroup', description: 'TODO' },
