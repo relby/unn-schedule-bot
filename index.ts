@@ -86,20 +86,24 @@ bot.command('mygroup', async ctx => {
     return await ctx.reply(`Your group is \`${groupName}\`\\. You can change it with /setgroup command`, { parse_mode: "MarkdownV2" });
 })
 
-bot.command('today', async ctx => {
-    const { groupName, groupId } = ctx.session;
-    // TODO: Move to function
-    if (!groupName || !groupId) {
-        return await ctx.reply(NO_GROUP_MESSAGE);
-    }
-    const today = new Date(2022, 2, 1);
-    const start = dateToParamsString(today);
+const lessonsByDate = async (groupId: string, date: Date): Promise<Lesson[]> => {
+    const start = dateToParamsString(date);
     const lessons = (await axios.get(`${API_SCHEDULE_URL}/${groupId}`, {
         params: {
             start,
             finish: start
         }
     })).data as Lesson[];
+    return lessons;
+}
+
+bot.command('today', async ctx => {
+    const { groupName, groupId } = ctx.session;
+    if (!groupName || !groupId) {
+        return await ctx.reply(NO_GROUP_MESSAGE);
+    }
+    const today = new Date();
+    const lessons = await lessonsByDate(groupId, today);
     if (lessons.length === 0) {
         return await ctx.reply(`There is no lessons today`)
     }
@@ -108,6 +112,23 @@ bot.command('today', async ctx => {
         .join('\n')
     return await ctx.reply(reply)
 });
+
+bot.command('tomorrow', async ctx => {
+    const { groupName, groupId } = ctx.session;
+    if (!groupName || !groupId) {
+        return await ctx.reply(NO_GROUP_MESSAGE);
+    }
+    const tomorrow = new Date();
+    tomorrow.setDate(new Date().getDate() + 1);
+    const lessons = await lessonsByDate(groupId, tomorrow);
+    if (lessons.length === 0) {
+        return await ctx.reply(`There is no lessons tomorrow`)
+    }
+    const reply = lessons
+        .map((lesson, i) => `${i+1}) ${lesson.beginLesson}-${lesson.endLesson} ${lesson.discipline} ${lesson.kindOfWork}`)
+        .join('\n')
+    return await ctx.reply(reply)
+})
 
 bot.command('deletegroup', async ctx => {
     ctx.session.groupName = null;
@@ -119,6 +140,7 @@ bot.api.setMyCommands([
     { command: 'setgroup',    description: 'TODO' },
     { command: 'mygroup',     description: 'TODO' },
     { command: 'today',       description: 'TODO' },
+    { command: 'tomorrow',       description: 'TODO' },
     { command: 'deletegroup', description: 'TODO' },
 ])
 
