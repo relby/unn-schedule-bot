@@ -1,14 +1,16 @@
 {
-  "name": "grammy-unn",
+  "name": "unn-schedule-bot",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Telegram bot for tracking schedule",
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon index.ts"
+    "dev": "nodemon index.ts",
+    "start": "node dist",
+    "build": "tsc"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "relby",
+  "license": "MIT",
   "dependencies": {
     "@grammyjs/conversations": "^1.0.2",
     "@grammyjs/storage-free": "^2.0.0",
