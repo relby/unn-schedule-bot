@@ -14,9 +14,11 @@
     "@grammyjs/storage-free": "^2.0.0",
     "axios": "^0.27.2",
     "dotenv": "^16.0.1",
+    "glob": "^8.0.3",
     "grammy": "^1.10.1"
   },
   "devDependencies": {
+    "@types/glob": "^7.2.0",
     "@types/node": "^18.7.3"
   }
 }
