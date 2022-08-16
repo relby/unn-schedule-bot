@@ -2,13 +2,13 @@ import { NO_GROUP_MESSAGE, lessonsByDate } from '../helpers';
 import { bot } from '../bot';
 
 bot.command('tomorrow', async ctx => {
-    const { groupName, groupId } = ctx.session;
-    if (!groupName || !groupId) {
+    const { group } = ctx.session;
+    if (!group) {
         return await ctx.reply(NO_GROUP_MESSAGE);
     }
     const tomorrow = new Date();
     tomorrow.setDate(new Date().getDate() + 1);
-    const lessons = await lessonsByDate(groupId, tomorrow);
+    const lessons = await lessonsByDate(group.id, tomorrow);
     if (lessons.length === 0) {
         return await ctx.reply(`There is no lessons tomorrow`)
     }

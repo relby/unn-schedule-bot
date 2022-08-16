@@ -15,8 +15,10 @@ if (!BOT_TOKEN) {
 }
 
 interface SessionData {
-    groupName: string | null;
-    groupId: string | null;
+    group: {
+        name: string;
+        id: string;
+    } | null;
 }
 
 export type MyContext = Context & SessionFlavor<SessionData> & ConversationFlavor;
@@ -25,7 +27,7 @@ export type MyConversation = Conversation<MyContext>;
 export const bot = new Bot<MyContext>(BOT_TOKEN);
 
 bot.use(session({
-    initial: () => ({ groupName: null, groupId: null }),
+    initial: () => ({ group: null }),
     storage: freeStorage<SessionData>(bot.token)
 }))
 

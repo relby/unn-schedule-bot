@@ -27,8 +27,10 @@ const setgroup = async (conversation: MyConversation, ctx: MyContext) => {
     }
    
     if (groups[0].label.toLowerCase() === groupName.toLowerCase()) {
-        ctx.session.groupName = groups[0].label;
-        ctx.session.groupId = groups[0].id;
+        ctx.session.group = {
+            name: groups[0].label,
+            id:   groups[0].id
+        }
         return await ctx.reply(`Group \`${groups[0].label}\` have been added to your account`, { parse_mode: "MarkdownV2" });
     }
     let inlineKeyboard = new InlineKeyboard()
@@ -44,8 +46,7 @@ bot.use(createConversation(setgroup))
 // Handle button interaction
 bot.callbackQuery(/^setgroup-(.+)$/, async (ctx) => {
     const [name, id] = ctx.callbackQuery.data.split('-').slice(1);
-    ctx.session.groupName = name;
-    ctx.session.groupId = id;
+    ctx.session.group = {name, id}
     const text = `Group \`${name}\` have been added to your account`;
     await ctx.answerCallbackQuery({ text });
     await ctx.editMessageText(text, { parse_mode: "MarkdownV2" });
