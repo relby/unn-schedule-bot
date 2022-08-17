@@ -1,16 +1,19 @@
 import { Bot, session } from 'grammy';
 import { BotCommand } from 'typegram';
-import { freeStorage } from '@grammyjs/storage-free'
 import { conversations } from '@grammyjs/conversations'
 import glob from 'glob';
 import { promisify } from 'util';
 import path from 'path';
 import { Command } from './Command';
-import { MyContext, SessionData } from '../typings/bot'
+import { MyContext } from '../typings/bot'
+import Redis from 'ioredis';
+import assert from 'assert';
+import { RedisAdapter } from '@grammyjs/storage-redis';
 
 const globPromise = promisify(glob)
 
 export class ExtendedBot extends Bot<MyContext> {
+    public db!: Redis;
 
     constructor() {
         const { BOT_TOKEN } = process.env;
@@ -19,6 +22,19 @@ export class ExtendedBot extends Bot<MyContext> {
             process.exit(1)
         }
         super(process.env.BOT_TOKEN!)
+
+        // Initialize database
+        const { REDIS_URL } = process.env;
+        assert(REDIS_URL, 'MISSING `REDIS_URL` ENV VARIABLE')
+        const db = new Redis(REDIS_URL);
+        const storage = new RedisAdapter({ instance: db, ttl: 0 });
+
+        this.use(session({
+            initial: () => ({ group: null }),
+            storage
+        }));
+
+        this.db = db;
     }
 
     async importFile (filePath: string) {
@@ -40,15 +56,8 @@ export class ExtendedBot extends Bot<MyContext> {
     }
 
     async start() {
-        this.use(session({
-            initial: () => ({ group: null }),
-            storage: freeStorage<SessionData>(this.token)
-        }));
-
         this.use(conversations());
-
         this.registerCommands();
-
         this.catch(console.error);
         super.start();
     }
