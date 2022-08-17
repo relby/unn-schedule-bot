@@ -1,5 +1,12 @@
 import { bot } from '../bot';
+import { Command } from '../classes/Command';
 
-bot.command('cancel', async ctx => {
-    await ctx.conversation.exit();
+export default new Command({
+    name: 'cancel',
+    description: 'Cancel conversation',
+    middlewares: [
+        async ctx => {
+            await ctx.conversation.exit();
+        }
+    ]
 })

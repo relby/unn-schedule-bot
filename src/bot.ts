@@ -1,11 +1,13 @@
 import dotenv from 'dotenv';
 dotenv.config()
 import { Bot, Context, session, SessionFlavor } from 'grammy';
+import { BotCommand } from 'typegram';
 import { freeStorage } from '@grammyjs/storage-free'
 import { type Conversation, type ConversationFlavor, conversations } from '@grammyjs/conversations'
 import glob from 'glob';
 import { promisify } from 'util';
 import path from 'path';
+import { Command } from './classes/Command';
 
 const { BOT_TOKEN } = process.env;
 
@@ -34,26 +36,25 @@ bot.use(session({
 bot.use(conversations())
 
 const globPromise = promisify(glob)
+
+const importFile = async (filePath: string) => {
+    return (await import(filePath))?.default;
+}
+
 const registerCommands = async () => {
     // TODO: Implement bot.api.setMyCommands
-    const commandsToRegister: string[] = [];
+    const commandsToRegister: BotCommand[] = [];
     const commandFiles = await globPromise(`${__dirname}/commands/*{.ts,.js}`.replace(/\\/g, '/'));
     console.log('Commands:');
-    commandFiles.forEach(async filePath => {
+    for (const filePath of commandFiles) {
         console.log(`  /${path.parse(filePath).name}`);
-        commandsToRegister.push(filePath)
-        await import(filePath);
-    });
+        const command: Command = await importFile(filePath);
+        bot.command(command.name, ...command.middlewares);
+        commandsToRegister.push({ command: command.name, description: command.description });
+    }
+    await bot.api.setMyCommands(commandsToRegister);
 }
 
 registerCommands();
-
-bot.api.setMyCommands([
-    { command: 'setgroup',    description: 'TODO' },
-    { command: 'mygroup',     description: 'TODO' },
-    { command: 'today',       description: 'TODO' },
-    { command: 'tomorrow',    description: 'TODO' },
-    { command: 'deletegroup', description: 'TODO' },
-])
 
 bot.catch(console.error);

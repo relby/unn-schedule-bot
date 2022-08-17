@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Lesson } from "./types";
+import { Lesson } from "./typings/api";
 const { API_URL } = process.env;
 
 export const dateToParamsString = (date: Date): string => `${date.getFullYear()}.${(date.getMonth()).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`

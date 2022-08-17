@@ -1,8 +1,9 @@
 import axios from 'axios'
-import { SearchGroup } from '../types';
+import { SearchGroup } from '../typings/api';
 import { InlineKeyboard } from 'grammy';
 import { MyConversation, MyContext, bot } from '../bot'
 import { createConversation } from '@grammyjs/conversations'
+import { Command } from '../classes/Command';
 
 const { API_URL } = process.env;
 
@@ -52,7 +53,12 @@ bot.callbackQuery(/^setgroup-(.+)$/, async (ctx) => {
     await ctx.editMessageText(text, { parse_mode: "MarkdownV2" });
 })
 
-// Register setgroup command
-bot.command('setgroup', async ctx => {
-    await ctx.conversation.enter('setgroup');
+export default new Command({
+    name: 'setgroup',
+    description: 'Set your group that you belong to',
+    middlewares: [
+        async ctx => {
+            await ctx.conversation.enter('setgroup');
+        }
+    ]
 })
