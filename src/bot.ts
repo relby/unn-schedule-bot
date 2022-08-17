@@ -39,7 +39,7 @@ const registerCommands = async () => {
     const commandsToRegister: string[] = [];
     const commandFiles = await globPromise(`${__dirname}/commands/*{.ts,.js}`.replace(/\\/g, '/'));
     console.log('Commands:');
-    commandFiles.forEach(async filePath => { 
+    commandFiles.forEach(async filePath => {
         console.log(`  /${path.parse(filePath).name}`);
         commandsToRegister.push(filePath)
         await import(filePath);

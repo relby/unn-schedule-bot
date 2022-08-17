@@ -25,7 +25,7 @@ const setgroup = async (conversation: MyConversation, ctx: MyContext) => {
     if (groups.length === 0) {
         return await ctx.reply(`Group \`${groupName}\` haven't been found`, { parse_mode: "MarkdownV2" });
     }
-   
+
     if (groups[0].label.toLowerCase() === groupName.toLowerCase()) {
         ctx.session.group = {
             name: groups[0].label,
