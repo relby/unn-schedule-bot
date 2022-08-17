@@ -1,11 +1,11 @@
-import { lessonsByDate, NO_GROUP_MESSAGE } from '../helpers';
+import { lessonsByDate } from '../helpers';
+import { checkGroup } from '../middlewares';
 import { bot } from '../bot';
+import assert from 'assert';
 
-bot.command('today', async ctx => {
+bot.command('today', checkGroup, async ctx => {
+    assert(ctx.session.group);
     const { group } = ctx.session;
-    if (!group) {
-        return await ctx.reply(NO_GROUP_MESSAGE);
-    }
     const today = new Date();
     const lessons = await lessonsByDate(group.id, today);
     if (lessons.length === 0) {

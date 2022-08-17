@@ -1,10 +1,9 @@
-import { NO_GROUP_MESSAGE } from '../helpers';
 import { bot } from '../bot';
+import { checkGroup } from '../middlewares';
+import assert from 'assert';
 
-bot.command('mygroup', async ctx => {
+bot.command('mygroup', checkGroup, async ctx => {
+    assert(ctx.session.group);
     const { group } = ctx.session;
-    if (!group) {
-        return await ctx.reply(NO_GROUP_MESSAGE);
-    }
     return await ctx.reply(`Your group is \`${group.name}\`\\. You can change it with /setgroup command`, { parse_mode: "MarkdownV2" });
 })
