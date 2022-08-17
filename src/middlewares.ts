@@ -1,5 +1,5 @@
 import { CommandMiddleware } from 'grammy'
-import { MyContext } from './bot'
+import { MyContext } from './typings/bot'
 
 const NO_GROUP_MESSAGE = `You don't have your group configured. Use /setgroup command to add the group to your account`;
 

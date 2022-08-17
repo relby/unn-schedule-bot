@@ -1,7 +1,8 @@
 import axios from 'axios'
 import { SearchGroup } from '../typings/api';
 import { InlineKeyboard } from 'grammy';
-import { MyConversation, MyContext, bot } from '../bot'
+import { MyConversation, MyContext } from '../typings/bot'
+import { bot } from '../index';
 import { createConversation } from '@grammyjs/conversations'
 import { Command } from '../classes/Command';
 

@@ -1,5 +1,4 @@
 import { lessonsByDate } from '../helpers';
-import { bot } from '../bot';
 import { checkGroup } from '../middlewares';
 import assert from 'assert';
 import { Command } from '../classes/Command';
