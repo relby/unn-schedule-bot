@@ -5,10 +5,12 @@ import glob from 'glob';
 import { promisify } from 'util';
 import path from 'path';
 import { Command } from './Command';
-import { MyContext } from '../typings/bot'
+import { MyContext, SessionData } from '../typings/bot'
 import Redis from 'ioredis';
 import assert from 'assert';
 import { RedisAdapter } from '@grammyjs/storage-redis';
+import cron from 'node-cron';
+import { dateToTimeString } from '../helpers';
 
 const globPromise = promisify(glob)
 
@@ -30,7 +32,10 @@ export class ExtendedBot extends Bot<MyContext> {
         const storage = new RedisAdapter({ instance: db, ttl: 0 });
 
         this.use(session({
-            initial: () => ({ group: null }),
+            initial: (): SessionData => ({
+                group: null,
+                notificationTimings: []
+            }),
             storage
         }));
 
@@ -55,9 +60,27 @@ export class ExtendedBot extends Bot<MyContext> {
 
     }
 
+    cronJobs() {
+        // Run this every minute
+        cron.schedule('* * * * *', async now => {
+            const keys = await this.db.keys('*');
+            keys.forEach(async key => {
+                const userString = await this.db.get(key);
+                if (!userString) return;
+                const user: SessionData = JSON.parse(userString);
+                if (!user.group) return;
+                if (user.notificationTimings.includes(dateToTimeString(now))) {
+                    await this.api.sendMessage(key, dateToTimeString(now))
+                }
+            })
+            console.log(dateToTimeString(now))
+        });
+    }
+
     async start() {
         this.use(conversations());
         this.registerCommands();
+        this.cronJobs();
         this.catch(console.error);
         super.start();
     }
