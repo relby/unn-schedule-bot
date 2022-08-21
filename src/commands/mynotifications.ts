@@ -7,8 +7,11 @@ export default new Command({
     middlewares: [
         checkGroup,
         async ctx => {
-            const { notificationTimings } = ctx.session;
-            return await ctx.reply(notificationTimings.join('\n'))
+            const { notifications } = ctx.session;
+            if (notifications.length === 0) {
+                return await ctx.reply(`You don't have any notifications. You can add it with /addnotification command`)
+            }
+            return await ctx.reply(notifications.map(e => e.time).join('\n'))
         }
     ]
 })

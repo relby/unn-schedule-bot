@@ -34,7 +34,7 @@ export class ExtendedBot extends Bot<MyContext> {
         this.use(session({
             initial: (): SessionData => ({
                 group: null,
-                notificationTimings: []
+                notifications: []
             }),
             storage
         }));
@@ -61,7 +61,6 @@ export class ExtendedBot extends Bot<MyContext> {
     }
 
     cronJobs() {
-        // Run this every minute
         cron.schedule('* * * * *', async now => {
             const keys = await this.db.keys('*');
             keys.forEach(async key => {
@@ -69,11 +68,11 @@ export class ExtendedBot extends Bot<MyContext> {
                 if (!userString) return;
                 const user: SessionData = JSON.parse(userString);
                 if (!user.group) return;
-                if (user.notificationTimings.includes(dateToTimeString(now))) {
+                // TODO: Send actual notification
+                if (user.notifications.map(e => e.time).includes(dateToTimeString(now))) {
                     await this.api.sendMessage(key, dateToTimeString(now))
                 }
             })
-            console.log(dateToTimeString(now))
         });
     }
 

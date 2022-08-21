@@ -23,11 +23,11 @@ export default new Command({
     middlewares: [
         checkGroup,
         async ctx => {
-            const { notificationTimings } = ctx.session;
-            if (notificationTimings.length === 0) {
+            const { notifications } = ctx.session;
+            if (notifications.length === 0) {
                 return await ctx.reply(NO_NOTIFICATIONS_MESSAGE);
             }
-            return await ctx.reply(INTRO_MESSAGE, { reply_markup: createInlineKeyboard(notificationTimings) })
+            return await ctx.reply(INTRO_MESSAGE, { reply_markup: createInlineKeyboard(notifications.map(e => e.time)) })
         }
     ]
 })
@@ -47,10 +47,10 @@ export default new Command({
 
 bot.callbackQuery(/^deletenotification-(.+)$/, async ctx => {
     const [time] = ctx.callbackQuery.data.split('-').slice(1);
-    ctx.session.notificationTimings = ctx.session.notificationTimings.filter(e => e !== time);
+    ctx.session.notifications = ctx.session.notifications.filter(e => e.time !== time);
     await ctx.answerCallbackQuery(`Notification on ${time} have been deleted`);
-    if (ctx.session.notificationTimings.length === 0) {
+    if (ctx.session.notifications.length === 0) {
         return await ctx.editMessageText(NO_NOTIFICATIONS_MESSAGE);
     }
-    return await ctx.editMessageText(INTRO_MESSAGE, { reply_markup: createInlineKeyboard(ctx.session.notificationTimings)});
+    return await ctx.editMessageText(INTRO_MESSAGE, { reply_markup: createInlineKeyboard(ctx.session.notifications.map(e => e.time))});
 })

@@ -11,6 +11,18 @@ export const dateToTimeString = (date: Date): TimeString => (
     `${date.getHours().toString().padStart(2, '0') as HH}:${date.getMinutes().toString().padStart(2, '0') as MM}`
 )
 
+export const isValidTimeString = (str: string): boolean => {
+    if (str.length !== 5) return false;
+    if (!str.includes(':')) return false;
+    const [hoursString, minutesString] = str.split(':')
+    if (hoursString.length !== 2 || minutesString.length !== 2) return false;
+    const [hours, minutes] = [hoursString, minutesString].map(parseInt)
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) return false;
+    if (hours <= 0 || hours >= 24) return false;
+    if (minutes <= 0 || minutes >= 60) return false;
+    return true;
+}
+
 export const lessonsByDate = async (groupId: string, date: Date): Promise<Lesson[]> => {
     const start = dateToParamsString(date);
     const lessons = (await axios.get(`${API_URL}/schedule/group/${groupId}`, {
