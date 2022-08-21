@@ -23,6 +23,10 @@ export const isValidTimeString = (str: string): boolean => {
     return true;
 }
 
+export const capitalize = (str: string): string => (
+    str.charAt(0).toUpperCase() + str.slice(1)
+)
+
 export const lessonsByDate = async (groupId: string, date: Date): Promise<Lesson[]> => {
     const start = dateToParamsString(date);
     const lessons = (await axios.get(`${API_URL}/schedule/group/${groupId}`, {
@@ -32,4 +36,27 @@ export const lessonsByDate = async (groupId: string, date: Date): Promise<Lesson
         }
     })).data as Lesson[];
     return lessons;
+}
+
+export const lessonsReplyByDate = async (groupId: string, date: Date): Promise<string> => {
+    const lessons = await lessonsByDate(groupId, date);
+    const now = new Date();
+    console.log(now.toDateString())
+    let dateString;
+    switch (date.getDate()) {
+        case now.getDate():
+            dateString = 'today'
+            break;
+        case now.getDate() + 1:
+            dateString = 'tomorrow'
+            break;
+        default:
+            dateString = date.toLocaleDateString()
+    }
+    if (lessons.length === 0) {
+       return `There is no lessons ${dateString}`;
+    }
+    return `${capitalize(dateString)}:\n${lessons
+        .map((lesson, i) => `${i+1}) ${lesson.beginLesson}-${lesson.endLesson} ${lesson.discipline} ${lesson.kindOfWork}`)
+        .join('\n')}`
 }

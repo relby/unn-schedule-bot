@@ -10,7 +10,7 @@ import Redis from 'ioredis';
 import assert from 'assert';
 import { RedisAdapter } from '@grammyjs/storage-redis';
 import cron from 'node-cron';
-import { dateToTimeString } from '../helpers';
+import { dateToTimeString, lessonsByDate, lessonsReplyByDate } from '../helpers';
 
 const globPromise = promisify(glob)
 
@@ -68,9 +68,21 @@ export class ExtendedBot extends Bot<MyContext> {
                 if (!userString) return;
                 const user: SessionData = JSON.parse(userString);
                 if (!user.group) return;
-                // TODO: Send actual notification
-                if (user.notifications.map(e => e.time).includes(dateToTimeString(now))) {
-                    await this.api.sendMessage(key, dateToTimeString(now))
+                for (const notification of user.notifications) {
+                    if (notification.time === dateToTimeString(now)) {
+                        let reply: string;
+                        switch (notification.day) {
+                            case 'today':
+                                reply = await lessonsReplyByDate(user.group.id, now);
+                                break;
+                            case 'tomorrow':
+                                const tomorrow = new Date(now.getTime())
+                                tomorrow.setDate(tomorrow.getDate() + 1)
+                                reply = await lessonsReplyByDate(user.group.id, tomorrow);
+                                break;
+                        }
+                        await this.api.sendMessage(key, reply)
+                    }
                 }
             })
         });

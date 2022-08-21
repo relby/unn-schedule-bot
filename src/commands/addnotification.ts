@@ -31,7 +31,7 @@ export default new Command({
     ]
 });
 
-let day: 'today' | 'tomorrow' | null = null
+let day: 'today' | 'tomorrow';
 
 bot.callbackQuery(/addnotification-(.+)/, async ctx => {
     day = (ctx.match as RegExpMatchArray).splice(1)[0] as 'today' | 'tomorrow'
