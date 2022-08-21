@@ -25,7 +25,7 @@ const setgroup = async (conversation: MyConversation, ctx: MyContext) => {
         }
     }))).data as SearchGroup[];
     if (groups.length === 0) {
-        return await ctx.reply(`Group \`${groupName}\` haven't been found`, { parse_mode: "MarkdownV2" });
+        return await ctx.reply(`Group \`${groupName}\` hasn't been found`, { parse_mode: "MarkdownV2" });
     }
 
     if (groups[0].label.toLowerCase() === groupName.toLowerCase()) {
@@ -33,23 +33,27 @@ const setgroup = async (conversation: MyConversation, ctx: MyContext) => {
             name: groups[0].label,
             id:   groups[0].id
         }
-        return await ctx.reply(`Group \`${groups[0].label}\` have been added to your account`, { parse_mode: "MarkdownV2" });
+        return await ctx.reply(`Group \`${groups[0].label}\` has been added to your account`, { parse_mode: "MarkdownV2" });
     }
     let inlineKeyboard = new InlineKeyboard()
     for (let i = 0; i < Math.min(groups.length, 3); i++) {
         inlineKeyboard = inlineKeyboard.text(groups[i].label, `setgroup-${groups[i].label}-${groups[i].id}`);
     }
-    return await ctx.reply(`\`${groupName}\` haven't been found\\. Did you mean this?`, { reply_markup: inlineKeyboard, parse_mode: "MarkdownV2" })
+    inlineKeyboard = inlineKeyboard.row().text('Cancel', `setgroup-cancel`)
+    return await ctx.reply(`\`${groupName}\` hasn't been found\\. Did you mean this?`, { reply_markup: inlineKeyboard, parse_mode: "MarkdownV2" })
 }
 
 // Use setgroup conversation
 bot.use(createConversation(setgroup))
 
-// Handle button interaction
-bot.callbackQuery(/^setgroup-(.+)$/, async (ctx) => {
+bot.callbackQuery('setgroup-cancel', async ctx => {
+    await ctx.editMessageText('You have canceled choosing your group. No group has been set.')
+})
+
+bot.callbackQuery(/^setgroup-(.+)$/, async ctx => {
     const [name, id] = ctx.callbackQuery.data.split('-').slice(1);
     ctx.session.group = {name, id}
-    const text = `Group \`${name}\` have been added to your account`;
+    const text = `Group \`${name}\` has been added to your account`;
     await ctx.answerCallbackQuery({ text });
     await ctx.editMessageText(text, { parse_mode: "MarkdownV2" });
 })
