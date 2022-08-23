@@ -3,6 +3,7 @@ declare global {
         interface ProcessEnv {
             BOT_TOKEN: string;
             API_URL: string;
+            REDIS_URL: string;
         }
     }
 }

@@ -1,4 +1,4 @@
-import { lessonsByDate } from '../helpers';
+import { lessonsByDate, lessonsReplyByDate } from '../helpers';
 import { checkGroup } from '../middlewares';
 import assert from 'assert';
 import { Command } from '../classes/Command';
@@ -13,13 +13,7 @@ export default new Command({
             const { group } = ctx.session;
             const tomorrow = new Date();
             tomorrow.setDate(new Date().getDate() + 1);
-            const lessons = await lessonsByDate(group.id, tomorrow);
-            if (lessons.length === 0) {
-                return await ctx.reply(`There is no lessons tomorrow`)
-            }
-            const reply = lessons
-                .map((lesson, i) => `${i+1}) ${lesson.beginLesson}-${lesson.endLesson} ${lesson.discipline} ${lesson.kindOfWork}`)
-                .join('\n')
+            const reply = await lessonsReplyByDate(group.id, tomorrow);
             return await ctx.reply(reply)
         }
     ]

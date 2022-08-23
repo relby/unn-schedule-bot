@@ -1,16 +1,21 @@
 import { Bot, session } from 'grammy';
 import { BotCommand } from 'typegram';
-import { freeStorage } from '@grammyjs/storage-free'
 import { conversations } from '@grammyjs/conversations'
 import glob from 'glob';
 import { promisify } from 'util';
 import path from 'path';
 import { Command } from './Command';
 import { MyContext, SessionData } from '../typings/bot'
+import Redis from 'ioredis';
+import assert from 'assert';
+import { RedisAdapter } from '@grammyjs/storage-redis';
+import cron from 'node-cron';
+import { dateToTimeString, lessonsByDate, lessonsReplyByDate } from '../helpers';
 
 const globPromise = promisify(glob)
 
 export class ExtendedBot extends Bot<MyContext> {
+    public db!: Redis;
 
     constructor() {
         const { BOT_TOKEN } = process.env;
@@ -19,6 +24,22 @@ export class ExtendedBot extends Bot<MyContext> {
             process.exit(1)
         }
         super(process.env.BOT_TOKEN!)
+
+        // Initialize database
+        const { REDIS_URL } = process.env;
+        assert(REDIS_URL, 'MISSING `REDIS_URL` ENV VARIABLE')
+        const db = new Redis(REDIS_URL);
+        const storage = new RedisAdapter({ instance: db, ttl: 0 });
+
+        this.use(session({
+            initial: (): SessionData => ({
+                group: null,
+                notifications: []
+            }),
+            storage
+        }));
+
+        this.db = db;
     }
 
     async importFile (filePath: string) {
@@ -39,16 +60,38 @@ export class ExtendedBot extends Bot<MyContext> {
 
     }
 
+    cronJobs() {
+        cron.schedule('* * * * *', async now => {
+            const keys = await this.db.keys('*');
+            keys.forEach(async key => {
+                const userString = await this.db.get(key);
+                if (!userString) return;
+                const user: SessionData = JSON.parse(userString);
+                if (!user.group) return;
+                for (const notification of user.notifications) {
+                    if (notification.time === dateToTimeString(now)) {
+                        let reply: string;
+                        switch (notification.day) {
+                            case 'today':
+                                reply = await lessonsReplyByDate(user.group.id, now);
+                                break;
+                            case 'tomorrow':
+                                const tomorrow = new Date(now.getTime())
+                                tomorrow.setDate(tomorrow.getDate() + 1)
+                                reply = await lessonsReplyByDate(user.group.id, tomorrow);
+                                break;
+                        }
+                        await this.api.sendMessage(key, reply)
+                    }
+                }
+            })
+        });
+    }
+
     async start() {
-        this.use(session({
-            initial: () => ({ group: null }),
-            storage: freeStorage<SessionData>(this.token)
-        }));
-
         this.use(conversations());
-
         this.registerCommands();
-
+        this.cronJobs();
         this.catch(console.error);
         super.start();
     }
