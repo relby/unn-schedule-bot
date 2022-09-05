@@ -29,6 +29,7 @@ export const capitalize = (str: string): string => (
 
 export const lessonsByDate = async (groupId: string, date: Date): Promise<Lesson[]> => {
     const start = dateToParamsString(date);
+    console.log(start)
     const lessons = (await axios.get(`${API_URL}/schedule/group/${groupId}`, {
         params: {
             start,
@@ -41,8 +42,7 @@ export const lessonsByDate = async (groupId: string, date: Date): Promise<Lesson
 export const lessonsReplyByDate = async (groupId: string, date: Date): Promise<string> => {
     const lessons = await lessonsByDate(groupId, date);
     const now = new Date();
-    console.log(now.toDateString())
-    let dateString;
+    let dateString: string;
     switch (date.getDate()) {
         case now.getDate():
             dateString = 'today'
