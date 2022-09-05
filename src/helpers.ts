@@ -4,7 +4,7 @@ import { HH, MM, TimeString } from "./typings/bot";
 const { API_URL } = process.env;
 
 export const dateToParamsString = (date: Date): string => (
-    `${date.getFullYear()}.${(date.getMonth()).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`
+    `${date.getFullYear()}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getDate().toString().padStart(2, '0')}`
 )
 
 export const dateToTimeString = (date: Date): TimeString => (
