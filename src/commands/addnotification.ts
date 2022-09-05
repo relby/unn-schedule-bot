@@ -47,8 +47,14 @@ bot.callbackQuery(/addnotification-(.+)/, async ctx => {
 
 bot.on('message:web_app_data', async ctx => {
     assert(day !== null)
-    const [ timestamp ] = ctx.message.web_app_data.data.split('_');
-    const time: TimeString = dateToTimeString(new Date(parseInt(timestamp)));
+    const [ timestamp, timezoneOffset ] = ctx.message.web_app_data.data.split('_');
+
+    const clientOffset = parseInt(timezoneOffset) * 60 * 1000
+    const serverOffset = (new Date()).getTimezoneOffset() * 60 * 1000
+    const offset = serverOffset - clientOffset
+
+    const time: TimeString = dateToTimeString(new Date(parseInt(timestamp) + offset));
+    console.log(time)
     if (!ctx.session.notifications.map(e => e.time).includes(time)) {
         ctx.session.notifications.push({
             day,
