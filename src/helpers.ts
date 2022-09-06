@@ -46,6 +46,7 @@ export const lessonsReplyByDate = async (groupId: string, date: Date): Promise<s
         case now.getDate():
             dateString = 'today'
             break;
+        // TODO: this shit doesn't work at the end of a month
         case now.getDate() + 1:
             dateString = 'tomorrow'
             break;
@@ -56,6 +57,9 @@ export const lessonsReplyByDate = async (groupId: string, date: Date): Promise<s
        return `There is no lessons ${dateString}`;
     }
     return `${capitalize(dateString)}:\n${lessons
-        .map((lesson, i) => `${i+1}) ${lesson.beginLesson}-${lesson.endLesson} ${lesson.discipline} ${lesson.kindOfWork}`)
+        .map((lesson, i) => {
+            const { beginLesson, endLesson, discipline, auditorium, kindOfWork } = lesson;
+            return `${i+1}) ${beginLesson}-${endLesson} ${discipline} ${auditorium} ${kindOfWork}\n`
+        })
         .join('\n')}`
 }
