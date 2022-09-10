@@ -4,7 +4,7 @@ import { Command } from "../classes/Command";
 import { dateToTimeString } from "../helpers";
 import { checkGroup } from "../middlewares";
 import { InlineKeyboardButton, InputMessageContent } from 'typegram';
-import { TimeString } from "../typings/bot";
+import { NotificationDay, TimeString } from "../typings/bot";
 import assert from "assert";
 
 const TIME_URL = 'https://expented.github.io/tgdtp/?hide=date&text=SELECT%20TIME:'
@@ -31,10 +31,18 @@ export default new Command({
     ]
 });
 
-let day: 'today' | 'tomorrow';
+let day: NotificationDay;
 
 bot.callbackQuery(/addnotification-(.+)/, async ctx => {
-    day = (ctx.match as RegExpMatchArray).splice(1)[0] as 'today' | 'tomorrow'
+    switch ((ctx.match as RegExpMatchArray).splice(1)[0]) {
+        case 'today':
+            day = NotificationDay.Today;
+            break;
+        case 'tomorrow':
+            day = NotificationDay.Tomorrow;
+            break;
+    }
+
     const keyboard = new Keyboard()
         .webApp('Set time', TIME_URL)
         .resized()

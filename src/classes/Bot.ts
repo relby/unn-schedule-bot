@@ -5,7 +5,7 @@ import glob from 'glob';
 import { promisify } from 'util';
 import path from 'path';
 import { Command } from './Command';
-import { MyContext, SessionData } from '../typings/bot'
+import { MyContext, NotificationDay, SessionData } from '../typings/bot'
 import Redis from 'ioredis';
 import assert from 'assert';
 import { RedisAdapter } from '@grammyjs/storage-redis';
@@ -72,10 +72,10 @@ export class ExtendedBot extends Bot<MyContext> {
                     if (notification.time === dateToTimeString(now)) {
                         let reply: string;
                         switch (notification.day) {
-                            case 'today':
+                            case NotificationDay.Today:
                                 reply = await lessonsReplyByDate(user.group.id, now);
                                 break;
-                            case 'tomorrow':
+                            case NotificationDay.Tomorrow:
                                 const tomorrow = new Date(now.getTime())
                                 tomorrow.setDate(tomorrow.getDate() + 1)
                                 reply = await lessonsReplyByDate(user.group.id, tomorrow);
