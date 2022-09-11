@@ -2,6 +2,7 @@ import { lessonsByDate, lessonsReplyByDate } from '../helpers';
 import { checkGroup } from '../middlewares';
 import assert from 'assert';
 import { Command } from '../classes/Command';
+import { DateTime } from 'luxon';
 
 export default new Command({
     name: 'today',
@@ -11,8 +12,7 @@ export default new Command({
         async ctx => {
             assert(ctx.session.group);
             const { group } = ctx.session;
-            const today = new Date();
-            const reply = await lessonsReplyByDate(group.id, today)
+            const reply = await lessonsReplyByDate(group.id, DateTime.now())
             return await ctx.reply(reply);
         }
     ]

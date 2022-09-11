@@ -1,11 +1,10 @@
 import { InlineKeyboard, Keyboard } from "grammy";
 import { bot } from "..";
 import { Command } from "../classes/Command";
-import { dateToTimeString } from "../helpers";
 import { checkGroup } from "../middlewares";
-import { InlineKeyboardButton, InputMessageContent } from 'typegram';
-import { NotificationDay, TimeString } from "../typings/bot";
+import { NotificationDay } from "../typings/bot";
 import assert from "assert";
+import { DateTime, FixedOffsetZone, Zone } from "luxon";
 
 const TIME_URL = 'https://expented.github.io/tgdtp/?hide=date&text=SELECT%20TIME:'
 
@@ -15,12 +14,6 @@ export default new Command({
     middlewares: [
         checkGroup,
         async ctx => {
-            const setTimeButton = {
-                text: 'Set time',
-                web_app: {
-                    url: TIME_URL,
-                }
-            }
             const inlineKeyboard = new InlineKeyboard()
                 .text('This day', 'addnotification-today')
                 .text('The day after', 'addnotification-tomorrow')
@@ -31,18 +24,10 @@ export default new Command({
     ]
 });
 
-let day: NotificationDay;
+let notificationDay: NotificationDay;
 
 bot.callbackQuery(/addnotification-(.+)/, async ctx => {
-    switch ((ctx.match as RegExpMatchArray).splice(1)[0]) {
-        case 'today':
-            day = NotificationDay.Today;
-            break;
-        case 'tomorrow':
-            day = NotificationDay.Tomorrow;
-            break;
-    }
-
+    notificationDay = (ctx.match as RegExpMatchArray).splice(1)[0] as NotificationDay;
     const keyboard = new Keyboard()
         .webApp('Set time', TIME_URL)
         .resized()
@@ -54,22 +39,22 @@ bot.callbackQuery(/addnotification-(.+)/, async ctx => {
 })
 
 bot.on('message:web_app_data', async ctx => {
-    assert(day !== null)
-    const [ timestamp, timezoneOffset ] = ctx.message.web_app_data.data.split('_');
+    assert(notificationDay !== null)
+    const [ timestampString, offsetUTCString ] = ctx.message.web_app_data.data.split('_');
 
-    const clientOffset = parseInt(timezoneOffset) * 60 * 1000
-    const serverOffset = (new Date()).getTimezoneOffset() * 60 * 1000
-    const offset = serverOffset - clientOffset
+    const timestamp = parseInt(timestampString);
+    const offsetUTC = -parseInt(offsetUTCString);
 
-    const time: TimeString = dateToTimeString(new Date(parseInt(timestamp) + offset));
-    console.log(time)
-    if (!ctx.session.notifications.map(e => e.time).includes(time)) {
-        ctx.session.notifications.push({
-            day,
-            time
-        })
-    }
-    ctx.reply(`Notification time on ${time} has been set`, {
+    const dt = DateTime
+        .fromMillis(timestamp)
+        .setZone(FixedOffsetZone.instance(offsetUTC), { keepLocalTime: true });
+    
+    ctx.session.notifications.push({
+        day: notificationDay,
+        time: dt.toISOTime()
+    })
+
+    ctx.reply(`Notification time on ${dt.toLocaleString(DateTime.TIME_24_SIMPLE)} has been set`, {
         reply_markup: {
             remove_keyboard: true
         }

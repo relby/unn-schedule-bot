@@ -5,12 +5,13 @@ import glob from 'glob';
 import { promisify } from 'util';
 import path from 'path';
 import { Command } from './Command';
-import { MyContext, NotificationDay, SessionData } from '../typings/bot'
+import { MyContext, SessionData } from '../typings/bot'
 import Redis from 'ioredis';
 import assert from 'assert';
 import { RedisAdapter } from '@grammyjs/storage-redis';
 import cron from 'node-cron';
-import { dateToTimeString, lessonsByDate, lessonsReplyByDate } from '../helpers';
+import { lessonsReplyByDate } from '../helpers';
+import { DateTime, Duration, FixedOffsetZone } from 'luxon';
 
 const globPromise = promisify(glob)
 
@@ -29,10 +30,10 @@ export class ExtendedBot extends Bot<MyContext> {
         const { REDIS_URL } = process.env;
         assert(REDIS_URL, 'MISSING `REDIS_URL` ENV VARIABLE')
         const db = new Redis(REDIS_URL);
-        const storage = new RedisAdapter({ instance: db, ttl: 0 });
+        const storage = new RedisAdapter<SessionData>({ instance: db, ttl: 0 });
 
-        this.use(session({
-            initial: (): SessionData => ({
+        this.use(session<SessionData, MyContext>({
+            initial: () => ({
                 group: null,
                 notifications: []
             }),
@@ -61,24 +62,28 @@ export class ExtendedBot extends Bot<MyContext> {
     }
 
     cronJobs() {
-        cron.schedule('* * * * *', async now => {
+        cron.schedule('* * * * *', async _ => {
             const keys = await this.db.keys('*');
             keys.forEach(async key => {
                 const userString = await this.db.get(key);
                 if (!userString) return;
                 const user: SessionData = JSON.parse(userString);
                 if (!user.group) return;
-                for (const notification of user.notifications) {
-                    if (notification.time === dateToTimeString(now)) {
+                for (const { time, day } of user.notifications) {
+                    const dt = DateTime.fromISO(time);
+                    const utc = DateTime
+                        .utc()
+                        .setZone(FixedOffsetZone.instance(dt.offset))
+                        .set({second: 0, millisecond: 0});
+                    const diff = dt.diff(utc, ['hours', 'minutes'])
+                    if (diff.equals(Duration.fromObject({ seconds: 0 }))) {
                         let reply: string;
-                        switch (notification.day) {
-                            case NotificationDay.Today:
-                                reply = await lessonsReplyByDate(user.group.id, now);
+                        switch (day) {
+                            case 'today':
+                                reply = await lessonsReplyByDate(user.group.id, DateTime.now());
                                 break;
-                            case NotificationDay.Tomorrow:
-                                const tomorrow = new Date(now.getTime())
-                                tomorrow.setDate(tomorrow.getDate() + 1)
-                                reply = await lessonsReplyByDate(user.group.id, tomorrow);
+                            case 'tomorrow':
+                                reply = await lessonsReplyByDate(user.group.id, DateTime.now().plus({ days: 1 }));
                                 break;
                         }
                         await this.api.sendMessage(key, reply)
