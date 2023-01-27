@@ -10,7 +10,7 @@ const TIME_URL = 'https://expented.github.io/tgdtp/?hide=date&text=SELECT%20TIME
 
 export default new Command({
     name: 'addnotification',
-    description: 'Add notification time to get schedule',
+    description: 'Add a notification of the schedule',
     middlewares: [
         checkGroup,
         async ctx => {

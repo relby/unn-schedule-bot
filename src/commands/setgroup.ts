@@ -60,7 +60,7 @@ bot.callbackQuery(/^setgroup-(.+)$/, async ctx => {
 
 export default new Command({
     name: 'setgroup',
-    description: 'Set your group that you belong to',
+    description: 'Set the group that you belong to',
     middlewares: [
         async ctx => {
             await ctx.conversation.enter('setgroup');

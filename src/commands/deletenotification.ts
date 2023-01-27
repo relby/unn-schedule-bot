@@ -25,7 +25,7 @@ const createInlineKeyboard = (notifications: Notification[]) => {
 
 export default new Command({
     name: 'deletenotification',
-    description: 'Pick your notifications that you want to delete',
+    description: 'Delete notifications',
     middlewares: [
         checkGroup,
         async ctx => {

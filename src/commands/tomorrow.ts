@@ -6,7 +6,7 @@ import { DateTime } from 'luxon';
 
 export default new Command({
     name: 'tomorrow',
-    description: 'TODO',
+    description: `Get tomorrow's lessons`,
     middlewares: [
         checkGroup,
         async ctx => {

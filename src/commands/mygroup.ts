@@ -4,7 +4,7 @@ import { Command } from '../classes/Command';
 
 export default new Command({
     name: 'mygroup',
-    description: 'Get info of your group',
+    description: 'Get the info of your group',
     middlewares: [
         checkGroup,
         async ctx => {

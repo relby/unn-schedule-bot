@@ -4,7 +4,7 @@ import { checkGroup } from "../middlewares";
 
 export default new Command({
     name: 'mynotifications',
-    description: 'Show your notifications',
+    description: 'Show configured notifications',
     middlewares: [
         checkGroup,
         async ctx => {
