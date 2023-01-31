@@ -27,9 +27,9 @@ export class ExtendedBot extends Bot<MyContext> {
         super(process.env.BOT_TOKEN!)
 
         // Initialize database
-        const { REDIS_URL } = process.env;
-        assert(REDIS_URL, 'MISSING `REDIS_URL` ENV VARIABLE')
-        const db = new Redis(REDIS_URL);
+        const { REDIS_PORT, REDIS_HOST } = process.env;
+        assert(REDIS_PORT && REDIS_HOST, `MISSING 'REDIS_HOST' or 'REDIS_PORT' ENV VARIABLE`)
+        const db = new Redis(REDIS_PORT, REDIS_HOST);
         const storage = new RedisAdapter<SessionData>({ instance: db, ttl: 0 });
 
         this.use(session<SessionData, MyContext>({
