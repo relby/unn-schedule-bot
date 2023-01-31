@@ -5,8 +5,7 @@ import { MyConversation, MyContext } from '../typings/bot'
 import { bot } from '../index';
 import { createConversation } from '@grammyjs/conversations'
 import { Command } from '../classes/Command';
-
-const { API_URL } = process.env;
+import { API_URL } from '../helpers';
 
 // Create setgroup command conversation
 const setgroup = async (conversation: MyConversation, ctx: MyContext) => {

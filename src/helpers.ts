@@ -1,7 +1,8 @@
 import axios from "axios";
 import { Lesson } from "./typings/api";
 import { DateTime } from "luxon";
-const { API_URL } = process.env;
+
+export const API_URL = "https://portal.unn.ru/ruzapi";
 
 export const capitalize = (str: string): string => (
     str.charAt(0).toUpperCase() + str.slice(1)
